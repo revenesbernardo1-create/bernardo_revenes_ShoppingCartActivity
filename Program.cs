@@ -92,4 +92,62 @@ namespace quiz
 
                 if (!alreadyInCart)
                 {
-            
+             if (totalItems >= selectedIds.Length)
+                    {
+                        Console.WriteLine("Cart is full.");
+                        continue;
+                    }
+
+                    selectedIds[totalItems] = chosenId;
+                    selectedQty[totalItems] = quantityInput;
+                    subTotals[totalItems] = chosenItem.ComputeTotal(quantityInput);
+                    totalItems++;
+                }
+
+                chosenItem.stockLeft -= quantityInput;
+
+                Console.WriteLine("Item added to cart!");
+
+                Console.Write("Add more? (Y/N): ");
+                userChoice = Console.ReadLine().ToUpper();
+
+            } while (userChoice == "Y");
+
+            double totalAmount = 0;
+
+            Console.WriteLine("\n----- RECEIPT -----");
+            Console.WriteLine("Item            Quantity   Subtotal");
+
+            for (int i = 0; i < totalItems; i++)
+            {
+                string productName = itemsList[selectedIds[i] - 1].itemName;
+                Console.WriteLine($"{productName,-15} {selectedQty[i],-10} {subTotals[i],-10}");
+                totalAmount += subTotals[i];
+            }
+
+            Console.WriteLine($"\nGrand Total: {totalAmount}");
+
+            double discountValue = 0;
+
+            if (totalAmount >= 5000)
+            {
+                discountValue = totalAmount * 0.10;
+                Console.WriteLine($"Discount (10%): {discountValue}");
+            }
+
+            double netTotal = totalAmount - discountValue;
+
+            Console.WriteLine($"Final Total: {netTotal}");
+
+            Console.WriteLine("\n----- UPDATED STOCK -----");
+            Console.WriteLine("ID    Name            Price      Stock");
+
+            for (int i = 0; i < itemsList.Length; i++)
+            {
+                itemsList[i].ShowItem();
+            }
+
+            Console.WriteLine("\nThank you for shopping!");
+        }
+    }
+}

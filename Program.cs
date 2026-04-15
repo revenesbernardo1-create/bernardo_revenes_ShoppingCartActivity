@@ -71,4 +71,25 @@ namespace quiz
                     Console.WriteLine("Invalid quantity!");
                     continue;
                 }
+                   if (quantityInput > chosenItem.stockLeft)
+                {
+                    Console.WriteLine("Not enough stock available.");
+                    continue;
+                }
+
+                bool alreadyInCart = false;
+
+                for (int i = 0; i < totalItems; i++)
+                {
+                    if (selectedIds[i] == chosenId)
+                    {
+                        selectedQty[i] += quantityInput;
+                        subTotals[i] = itemsList[chosenId - 1].ComputeTotal(selectedQty[i]);
+                        alreadyInCart = true;
+                        break;
+                    }
+                }
+
+                if (!alreadyInCart)
+                {
             

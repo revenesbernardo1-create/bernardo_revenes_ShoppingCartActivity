@@ -37,4 +37,38 @@ namespace quiz
             int totalItems = 0;
 
             string userChoice = "Y";
+
+             do
+            {
+                Console.WriteLine("\n----- STORE MENU -----");
+                Console.WriteLine("ID    Name            Price      Stock");
+
+                for (int i = 0; i < itemsList.Length; i++)
+                {
+                    itemsList[i].ShowItem();
+                }
+
+                Console.Write("\nEnter product ID: ");
+                int chosenId;
+                if (!int.TryParse(Console.ReadLine(), out chosenId) || chosenId < 1 || chosenId > itemsList.Length)
+                {
+                    Console.WriteLine("Invalid product number!");
+                    continue;
+                }
+
+                Item chosenItem = itemsList[chosenId - 1];
+
+                if (chosenItem.stockLeft == 0)
+                {
+                    Console.WriteLine("Out of stock!");
+                    continue;
+                }
+
+                Console.Write("Enter quantity: ");
+                int quantityInput;
+                if (!int.TryParse(Console.ReadLine(), out quantityInput) || quantityInput <= 0)
+                {
+                    Console.WriteLine("Invalid quantity!");
+                    continue;
+                }
             

@@ -173,13 +173,13 @@ namespace quiz
         public double itemPrice;
         public int stockLeft;
 
-        
+        // Display product details
         public void ShowItem()
         {
             Console.WriteLine($"{itemCode,-5} {itemName,-20} {category,-15} {itemPrice,-10} {stockLeft,-10}");
         }
 
-        
+        // Calculate subtotal
         public double ComputeTotal(int quantity)
         {
             return itemPrice * quantity;
@@ -190,7 +190,7 @@ namespace quiz
     {
         static void Main(string[] args)
         {
-            
+            // Product inventory
             Item[] itemsList = new Item[]
             {
                 new Item { itemCode = 1, itemName = "Laptop", category = "Electronics", itemPrice = 35000, stockLeft = 10 },
@@ -200,7 +200,7 @@ namespace quiz
                 new Item { itemCode = 5, itemName = "Bluetooth Speaker", category = "Audio", itemPrice = 2500, stockLeft = 25 }
             };
 
-            
+            // Cart arrays
             int[] cartIds = new int[10];
             int[] cartQty = new int[10];
             double[] cartSubtotals = new double[10];
@@ -250,7 +250,7 @@ namespace quiz
 
                 bool existingItem = false;
 
-               
+                // Check if item already exists in cart
                 for (int i = 0; i < cartCount; i++)
                 {
                     if (cartIds[i] == chosenId)
@@ -262,7 +262,7 @@ namespace quiz
                     }
                 }
 
-               
+                // Add new item if not yet in cart
                 if (!existingItem)
                 {
                     cartIds[cartCount] = chosenId;
@@ -271,7 +271,7 @@ namespace quiz
                     cartCount++;
                 }
 
-                
+                // Update stock after adding to cart
                 selectedItem.stockLeft -= quantity;
 
                 Console.WriteLine("Item added to cart.");
@@ -285,7 +285,7 @@ namespace quiz
             Console.WriteLine("\nThank you for shopping!");
         }
 
-        
+        // Print receipt after shopping
         static void PrintReceipt(Item[] items, int[] ids, int[] qtys, double[] subtotals, int count)
         {
             double totalAmount = 0;
@@ -315,7 +315,7 @@ namespace quiz
             Console.WriteLine($"Final Total: {finalTotal}");
         }
 
-        
+        // Validate numeric input
         static int GetValidNumber(string message)
         {
             int value;
@@ -333,7 +333,7 @@ namespace quiz
             }
         }
 
-        
+        // Validate Y/N input
         static string GetYesNoInput(string message)
         {
             while (true)

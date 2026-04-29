@@ -173,13 +173,11 @@ namespace quiz
         public double itemPrice;
         public int stockLeft;
 
-        // Display product details
         public void ShowItem()
         {
             Console.WriteLine($"{itemCode,-5} {itemName,-20} {category,-15} {itemPrice,-10} {stockLeft,-10}");
         }
 
-        // Compute subtotal
         public double ComputeTotal(int quantity)
         {
             return itemPrice * quantity;
@@ -236,12 +234,12 @@ namespace quiz
                         break;
 
                     case 5:
-                        PrintReceipt(itemsList, cartIds, cartQty, cartSubtotals, cartCount);
+                        Checkout(itemsList, cartIds, cartQty, cartSubtotals, cartCount);
                         running = false;
                         break;
 
                     default:
-                        Console.WriteLine("Invalid menu option.");
+                        Console.WriteLine("Invalid option.");
                         break;
                 }
             }
@@ -249,7 +247,6 @@ namespace quiz
             Console.WriteLine("\nThank you for shopping!");
         }
 
-        // Show products
         static void DisplayProducts(Item[] items)
         {
             Console.WriteLine("\nID    Name                 Category        Price      Stock");
@@ -260,7 +257,6 @@ namespace quiz
             }
         }
 
-        // Search products
         static void SearchProduct(Item[] items)
         {
             Console.Write("\nEnter product name to search: ");
@@ -286,7 +282,6 @@ namespace quiz
             }
         }
 
-        // Add product to cart
         static void AddToCart(Item[] items, int[] ids, int[] qtys,
             double[] subtotals, ref int cartCount)
         {
@@ -342,7 +337,6 @@ namespace quiz
             Console.WriteLine("Item added to cart.");
         }
 
-        // Cart management menu
         static void CartMenu(Item[] items, int[] ids, int[] qtys,
             double[] subtotals, ref int cartCount)
         {
@@ -353,8 +347,9 @@ namespace quiz
                 Console.WriteLine("\n===== CART MENU =====");
                 Console.WriteLine("1. View Cart");
                 Console.WriteLine("2. Remove Item");
-                Console.WriteLine("3. Clear Cart");
-                Console.WriteLine("4. Back");
+                Console.WriteLine("3. Update Quantity");
+                Console.WriteLine("4. Clear Cart");
+                Console.WriteLine("5. Back");
 
                 int choice = GetValidNumber("Choose option: ");
 
@@ -369,22 +364,21 @@ namespace quiz
                         break;
 
                     case 3:
+                        UpdateQuantity(items, ids, qtys, subtotals, cartCount, items);
+                        break;
+
+                    case 4:
                         cartCount = 0;
                         Console.WriteLine("Cart cleared.");
                         break;
 
-                    case 4:
+                    case 5:
                         insideCart = false;
-                        break;
-
-                    default:
-                        Console.WriteLine("Invalid option.");
                         break;
                 }
             }
         }
 
-        // View cart items
         static void ViewCart(Item[] items, int[] ids, int[] qtys,
             double[] subtotals, int cartCount)
         {
@@ -401,7 +395,6 @@ namespace quiz
             Console.WriteLine($"Grand Total: {total}");
         }
 
-        // Remove item from cart
         static void RemoveItem(Item[] items, int[] ids, int[] qtys,
             double[] subtotals, ref int cartCount)
         {
@@ -421,7 +414,7 @@ namespace quiz
                     }
 
                     cartCount--;
-                    Console.WriteLine("Item removed from cart.");
+                    Console.WriteLine("Item removed.");
                     return;
                 }
             }
@@ -429,8 +422,29 @@ namespace quiz
             Console.WriteLine("Item not found.");
         }
 
-        // Print receipt
-        static void PrintReceipt(Item[] items, int[] ids, int[] qtys,
+        static void UpdateQuantity(Item[] products, int[] ids, int[] qtys,
+            double[] subtotals, int cartCount, Item[] items)
+        {
+            int updateId = GetValidNumber("Enter product ID to update: ");
+
+            for (int i = 0; i < cartCount; i++)
+            {
+                if (ids[i] == updateId)
+                {
+                    int newQty = GetValidNumber("Enter new quantity: ");
+
+                    qtys[i] = newQty;
+                    subtotals[i] = items[updateId - 1].ComputeTotal(newQty);
+
+                    Console.WriteLine("Quantity updated.");
+                    return;
+                }
+            }
+
+            Console.WriteLine("Item not found.");
+        }
+
+        static void Checkout(Item[] items, int[] ids, int[] qtys,
             double[] subtotals, int count)
         {
             double totalAmount = 0;
@@ -448,18 +462,37 @@ namespace quiz
 
             Console.WriteLine($"\nGrand Total: {totalAmount}");
 
-            double discount = 0;
+            double discount = totalAmount >= 5000 ? totalAmount * 0.10 : 0;
+            double finalTotal = totalAmount - discount;
 
-            if (totalAmount >= 5000)
+            Console.WriteLine($"Discount: {discount}");
+            Console.WriteLine($"Final Total: {finalTotal}");
+
+            double payment;
+
+            while (true)
             {
-                discount = totalAmount * 0.10;
-                Console.WriteLine($"Discount (10%): {discount}");
+                Console.Write("Enter payment: ");
+
+                if (double.TryParse(Console.ReadLine(), out payment))
+                {
+                    if (payment >= finalTotal)
+                    {
+                        break;
+                    }
+
+                    Console.WriteLine("Insufficient payment.");
+                }
+                else
+                {
+                    Console.WriteLine("Payment must be numeric.");
+                }
             }
 
-            Console.WriteLine($"Final Total: {totalAmount - discount}");
+            double change = payment - finalTotal;
+            Console.WriteLine($"Change: {change}");
         }
 
-        // Number validation
         static int GetValidNumber(string message)
         {
             int value;

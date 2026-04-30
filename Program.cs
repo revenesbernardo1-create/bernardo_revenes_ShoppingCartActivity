@@ -184,8 +184,17 @@ namespace quiz
         }
     }
 
+    class Order
+    {
+        public string receiptNumber;
+        public double finalTotal;
+        public string orderDate;
+    }
+
     class Program
     {
+        static int receiptCounter = 1;
+
         static void Main(string[] args)
         {
             Item[] itemsList = new Item[]
@@ -202,6 +211,9 @@ namespace quiz
             double[] cartSubtotals = new double[10];
             int cartCount = 0;
 
+            Order[] orderHistory = new Order[10];
+            int orderCount = 0;
+
             bool running = true;
 
             while (running)
@@ -212,6 +224,7 @@ namespace quiz
                 Console.WriteLine("3. Add to Cart");
                 Console.WriteLine("4. Cart Menu");
                 Console.WriteLine("5. Checkout");
+                Console.WriteLine("6. View Order History");
 
                 int menuChoice = GetValidNumber("Choose option: ");
 
@@ -234,14 +247,20 @@ namespace quiz
                         break;
 
                     case 5:
-                        Checkout(itemsList, cartIds, cartQty, cartSubtotals, cartCount);
-                        running = false;
+                        Checkout(itemsList, cartIds, cartQty, cartSubtotals, ref cartCount,
+                            orderHistory, ref orderCount);
+                        break;
+
+                    case 6:
+                        ShowOrderHistory(orderHistory, orderCount);
                         break;
 
                     default:
                         Console.WriteLine("Invalid option.");
                         break;
                 }
+
+                running = GetYesNo("\nContinue program? (Y/N): ");
             }
 
             Console.WriteLine("\nThank you for shopping!");
@@ -263,9 +282,6 @@ namespace quiz
             string keyword = Console.ReadLine().ToLower();
 
             bool found = false;
-
-            Console.WriteLine("\nSEARCH RESULT:");
-            Console.WriteLine("ID    Name                 Category        Price      Stock");
 
             for (int i = 0; i < items.Length; i++)
             {
@@ -297,12 +313,6 @@ namespace quiz
 
             Item selectedItem = items[chosenId - 1];
 
-            if (selectedItem.stockLeft == 0)
-            {
-                Console.WriteLine("Out of stock.");
-                return;
-            }
-
             int quantity = GetValidNumber("Enter quantity: ");
 
             if (quantity <= 0 || quantity > selectedItem.stockLeft)
@@ -311,26 +321,10 @@ namespace quiz
                 return;
             }
 
-            bool existingItem = false;
-
-            for (int i = 0; i < cartCount; i++)
-            {
-                if (ids[i] == chosenId)
-                {
-                    qtys[i] += quantity;
-                    subtotals[i] = selectedItem.ComputeTotal(qtys[i]);
-                    existingItem = true;
-                    break;
-                }
-            }
-
-            if (!existingItem)
-            {
-                ids[cartCount] = chosenId;
-                qtys[cartCount] = quantity;
-                subtotals[cartCount] = selectedItem.ComputeTotal(quantity);
-                cartCount++;
-            }
+            ids[cartCount] = chosenId;
+            qtys[cartCount] = quantity;
+            subtotals[cartCount] = selectedItem.ComputeTotal(quantity);
+            cartCount++;
 
             selectedItem.stockLeft -= quantity;
 
@@ -340,42 +334,27 @@ namespace quiz
         static void CartMenu(Item[] items, int[] ids, int[] qtys,
             double[] subtotals, ref int cartCount)
         {
-            bool insideCart = true;
+            Console.WriteLine("\n===== CART MENU =====");
+            Console.WriteLine("1. View Cart");
+            Console.WriteLine("2. Remove Item");
+            Console.WriteLine("3. Clear Cart");
 
-            while (insideCart)
+            int choice = GetValidNumber("Choose option: ");
+
+            switch (choice)
             {
-                Console.WriteLine("\n===== CART MENU =====");
-                Console.WriteLine("1. View Cart");
-                Console.WriteLine("2. Remove Item");
-                Console.WriteLine("3. Update Quantity");
-                Console.WriteLine("4. Clear Cart");
-                Console.WriteLine("5. Back");
+                case 1:
+                    ViewCart(items, ids, qtys, subtotals, cartCount);
+                    break;
 
-                int choice = GetValidNumber("Choose option: ");
+                case 2:
+                    RemoveItem(items, ids, qtys, subtotals, ref cartCount);
+                    break;
 
-                switch (choice)
-                {
-                    case 1:
-                        ViewCart(items, ids, qtys, subtotals, cartCount);
-                        break;
-
-                    case 2:
-                        RemoveItem(items, ids, qtys, subtotals, ref cartCount);
-                        break;
-
-                    case 3:
-                        UpdateQuantity(items, ids, qtys, subtotals, cartCount, items);
-                        break;
-
-                    case 4:
-                        cartCount = 0;
-                        Console.WriteLine("Cart cleared.");
-                        break;
-
-                    case 5:
-                        insideCart = false;
-                        break;
-                }
+                case 3:
+                    cartCount = 0;
+                    Console.WriteLine("Cart cleared.");
+                    break;
             }
         }
 
@@ -418,53 +397,29 @@ namespace quiz
                     return;
                 }
             }
-
-            Console.WriteLine("Item not found.");
-        }
-
-        static void UpdateQuantity(Item[] products, int[] ids, int[] qtys,
-            double[] subtotals, int cartCount, Item[] items)
-        {
-            int updateId = GetValidNumber("Enter product ID to update: ");
-
-            for (int i = 0; i < cartCount; i++)
-            {
-                if (ids[i] == updateId)
-                {
-                    int newQty = GetValidNumber("Enter new quantity: ");
-
-                    qtys[i] = newQty;
-                    subtotals[i] = items[updateId - 1].ComputeTotal(newQty);
-
-                    Console.WriteLine("Quantity updated.");
-                    return;
-                }
-            }
-
-            Console.WriteLine("Item not found.");
         }
 
         static void Checkout(Item[] items, int[] ids, int[] qtys,
-            double[] subtotals, int count)
+            double[] subtotals, ref int cartCount,
+            Order[] history, ref int orderCount)
         {
-            double totalAmount = 0;
-
-            Console.WriteLine("\n===== RECEIPT =====");
-            Console.WriteLine("Item                 Qty        Subtotal");
-
-            for (int i = 0; i < count; i++)
+            if (cartCount == 0)
             {
-                string productName = items[ids[i] - 1].itemName;
-
-                Console.WriteLine($"{productName,-20} {qtys[i],-10} {subtotals[i],-10}");
-                totalAmount += subtotals[i];
+                Console.WriteLine("Cart is empty.");
+                return;
             }
 
-            Console.WriteLine($"\nGrand Total: {totalAmount}");
+            double totalAmount = 0;
+
+            for (int i = 0; i < cartCount; i++)
+            {
+                totalAmount += subtotals[i];
+            }
 
             double discount = totalAmount >= 5000 ? totalAmount * 0.10 : 0;
             double finalTotal = totalAmount - discount;
 
+            Console.WriteLine($"\nGrand Total: {totalAmount}");
             Console.WriteLine($"Discount: {discount}");
             Console.WriteLine($"Final Total: {finalTotal}");
 
@@ -477,9 +432,7 @@ namespace quiz
                 if (double.TryParse(Console.ReadLine(), out payment))
                 {
                     if (payment >= finalTotal)
-                    {
                         break;
-                    }
 
                     Console.WriteLine("Insufficient payment.");
                 }
@@ -490,7 +443,50 @@ namespace quiz
             }
 
             double change = payment - finalTotal;
+            string receiptNo = receiptCounter.ToString("0000");
+            receiptCounter++;
+
+            Console.WriteLine("\n===== RECEIPT =====");
+            Console.WriteLine($"Receipt No: {receiptNo}");
+            Console.WriteLine($"Date: {DateTime.Now}");
+            Console.WriteLine($"Payment: {payment}");
             Console.WriteLine($"Change: {change}");
+
+            history[orderCount] = new Order
+            {
+                receiptNumber = receiptNo,
+                finalTotal = finalTotal,
+                orderDate = DateTime.Now.ToString()
+            };
+
+            orderCount++;
+            cartCount = 0;
+
+            ShowLowStock(items);
+        }
+
+        static void ShowLowStock(Item[] items)
+        {
+            Console.WriteLine("\nLOW STOCK ALERT:");
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (items[i].stockLeft <= 5)
+                {
+                    Console.WriteLine($"{items[i].itemName} has only {items[i].stockLeft} stocks left.");
+                }
+            }
+        }
+
+        static void ShowOrderHistory(Order[] history, int count)
+        {
+            Console.WriteLine("\n===== ORDER HISTORY =====");
+
+            for (int i = 0; i < count; i++)
+            {
+                Console.WriteLine(
+                    $"Receipt #{history[i].receiptNumber} | Final Total: {history[i].finalTotal} | {history[i].orderDate}");
+            }
         }
 
         static int GetValidNumber(string message)
@@ -507,6 +503,23 @@ namespace quiz
                 }
 
                 Console.WriteLine("Invalid input. Numbers only.");
+            }
+        }
+
+        static bool GetYesNo(string message)
+        {
+            while (true)
+            {
+                Console.Write(message);
+                string input = Console.ReadLine().ToUpper();
+
+                if (input == "Y")
+                    return true;
+
+                if (input == "N")
+                    return false;
+
+                Console.WriteLine("Please enter Y or N only.");
             }
         }
     }

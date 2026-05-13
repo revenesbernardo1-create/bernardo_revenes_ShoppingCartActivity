@@ -524,3 +524,409 @@ namespace quiz
         }
     }
 }
+
+__________________________encapsulation____________________________
+
+using System;
+
+namespace quiz
+{
+    class Item
+    {
+        private int itemCode;
+        private string itemName;
+        private string category;
+        private double itemPrice;
+        private int stockLeft;
+
+        public int ItemCode
+        {
+            get { return itemCode; }
+            set { itemCode = value; }
+        }
+
+        public string ItemName
+        {
+            get { return itemName; }
+            set { itemName = value; }
+        }
+
+        public string Category
+        {
+            get { return category; }
+            set { category = value; }
+        }
+
+        public double ItemPrice
+        {
+            get { return itemPrice; }
+            set { itemPrice = value; }
+        }
+
+        public int StockLeft
+        {
+            get { return stockLeft; }
+            set { stockLeft = value; }
+        }
+
+        public void ShowItem()
+        {
+            Console.WriteLine($"{ItemCode,-5} {ItemName,-20} {Category,-15} {ItemPrice,-10} {StockLeft,-10}");
+        }
+
+        public double ComputeTotal(int quantity)
+        {
+            return ItemPrice * quantity;
+        }
+    }
+
+    class Order
+    {
+        private string receiptNumber;
+        private double finalTotal;
+        private string orderDate;
+
+        public string ReceiptNumber
+        {
+            get { return receiptNumber; }
+            set { receiptNumber = value; }
+        }
+
+        public double FinalTotal
+        {
+            get { return finalTotal; }
+            set { finalTotal = value; }
+        }
+
+        public string OrderDate
+        {
+            get { return orderDate; }
+            set { orderDate = value; }
+        }
+    }
+
+    class Program
+    {
+        static int receiptCounter = 1;
+
+        static void Main(string[] args)
+        {
+            Item[] itemsList = new Item[]
+            {
+                new Item { ItemCode = 1, ItemName = "Laptop", Category = "Electronics", ItemPrice = 35000, StockLeft = 10 },
+                new Item { ItemCode = 2, ItemName = "Smartphone", Category = "Electronics", ItemPrice = 18000, StockLeft = 15 },
+                new Item { ItemCode = 3, ItemName = "Tablet", Category = "Electronics", ItemPrice = 12000, StockLeft = 12 },
+                new Item { ItemCode = 4, ItemName = "Smartwatch", Category = "Wearables", ItemPrice = 5000, StockLeft = 20 },
+                new Item { ItemCode = 5, ItemName = "Bluetooth Speaker", Category = "Audio", ItemPrice = 2500, StockLeft = 25 }
+            };
+
+            int[] cartIds = new int[10];
+            int[] cartQty = new int[10];
+            double[] cartSubtotals = new double[10];
+            int cartCount = 0;
+
+            Order[] orderHistory = new Order[10];
+            int orderCount = 0;
+
+            bool running = true;
+
+            while (running)
+            {
+                Console.WriteLine("\n===== STORE MENU =====");
+                Console.WriteLine("1. View Products");
+                Console.WriteLine("2. Search Product");
+                Console.WriteLine("3. Add to Cart");
+                Console.WriteLine("4. Cart Menu");
+                Console.WriteLine("5. Checkout");
+                Console.WriteLine("6. View Order History");
+
+                int menuChoice = GetValidNumber("Choose option: ");
+
+                switch (menuChoice)
+                {
+                    case 1:
+                        DisplayProducts(itemsList);
+                        break;
+
+                    case 2:
+                        SearchProduct(itemsList);
+                        break;
+
+                    case 3:
+                        AddToCart(itemsList, cartIds, cartQty, cartSubtotals, ref cartCount);
+                        break;
+
+                    case 4:
+                        CartMenu(itemsList, cartIds, cartQty, cartSubtotals, ref cartCount);
+                        break;
+
+                    case 5:
+                        Checkout(itemsList, cartIds, cartQty, cartSubtotals, ref cartCount, orderHistory, ref orderCount);
+                        break;
+
+                    case 6:
+                        ShowOrderHistory(orderHistory, orderCount);
+                        break;
+
+                    default:
+                        Console.WriteLine("Invalid option.");
+                        break;
+                }
+
+                running = GetYesNo("\nContinue program? (Y/N): ");
+            }
+
+            Console.WriteLine("\nThank you for shopping!");
+        }
+
+        static void DisplayProducts(Item[] items)
+        {
+            Console.WriteLine("\nID    Name                 Category        Price      Stock");
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                items[i].ShowItem();
+            }
+        }
+
+        static void SearchProduct(Item[] items)
+        {
+            Console.Write("\nEnter product name to search: ");
+            string keyword = Console.ReadLine().ToLower();
+
+            bool found = false;
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (items[i].ItemName.ToLower().Contains(keyword))
+                {
+                    items[i].ShowItem();
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                Console.WriteLine("No matching product found.");
+            }
+        }
+
+        static void AddToCart(Item[] items, int[] ids, int[] qtys, double[] subtotals, ref int cartCount)
+        {
+            DisplayProducts(items);
+
+            int chosenId = GetValidNumber("\nEnter product ID: ");
+
+            if (chosenId < 1 || chosenId > items.Length)
+            {
+                Console.WriteLine("Invalid product ID.");
+                return;
+            }
+
+            Item selectedItem = items[chosenId - 1];
+            int quantity = GetValidNumber("Enter quantity: ");
+
+            if (quantity <= 0 || quantity > selectedItem.StockLeft)
+            {
+                Console.WriteLine("Invalid quantity.");
+                return;
+            }
+
+            ids[cartCount] = chosenId;
+            qtys[cartCount] = quantity;
+            subtotals[cartCount] = selectedItem.ComputeTotal(quantity);
+            cartCount++;
+
+            selectedItem.StockLeft -= quantity;
+
+            Console.WriteLine("Item added to cart.");
+        }
+
+        static void CartMenu(Item[] items, int[] ids, int[] qtys, double[] subtotals, ref int cartCount)
+        {
+            Console.WriteLine("\n===== CART MENU =====");
+            Console.WriteLine("1. View Cart");
+            Console.WriteLine("2. Remove Item");
+            Console.WriteLine("3. Clear Cart");
+
+            int choice = GetValidNumber("Choose option: ");
+
+            switch (choice)
+            {
+                case 1:
+                    ViewCart(items, ids, qtys, subtotals, cartCount);
+                    break;
+
+                case 2:
+                    RemoveItem(items, ids, qtys, subtotals, ref cartCount);
+                    break;
+
+                case 3:
+                    cartCount = 0;
+                    Console.WriteLine("Cart cleared.");
+                    break;
+            }
+        }
+
+        static void ViewCart(Item[] items, int[] ids, int[] qtys, double[] subtotals, int cartCount)
+        {
+            double total = 0;
+
+            Console.WriteLine("\n===== YOUR CART =====");
+
+            for (int i = 0; i < cartCount; i++)
+            {
+                Console.WriteLine($"{items[ids[i] - 1].ItemName} | Qty: {qtys[i]} | {subtotals[i]}");
+                total += subtotals[i];
+            }
+
+            Console.WriteLine($"Grand Total: {total}");
+        }
+
+        static void RemoveItem(Item[] items, int[] ids, int[] qtys, double[] subtotals, ref int cartCount)
+        {
+            int removeId = GetValidNumber("Enter product ID to remove: ");
+
+            for (int i = 0; i < cartCount; i++)
+            {
+                if (ids[i] == removeId)
+                {
+                    items[removeId - 1].StockLeft += qtys[i];
+
+                    for (int j = i; j < cartCount - 1; j++)
+                    {
+                        ids[j] = ids[j + 1];
+                        qtys[j] = qtys[j + 1];
+                        subtotals[j] = subtotals[j + 1];
+                    }
+
+                    cartCount--;
+                    Console.WriteLine("Item removed.");
+                    return;
+                }
+            }
+        }
+
+        static void Checkout(Item[] items, int[] ids, int[] qtys, double[] subtotals, ref int cartCount, Order[] history, ref int orderCount)
+        {
+            if (cartCount == 0)
+            {
+                Console.WriteLine("Cart is empty.");
+                return;
+            }
+
+            double totalAmount = 0;
+
+            for (int i = 0; i < cartCount; i++)
+            {
+                totalAmount += subtotals[i];
+            }
+
+            double discount = totalAmount >= 5000 ? totalAmount * 0.10 : 0;
+            double finalTotal = totalAmount - discount;
+
+            Console.WriteLine($"\nGrand Total: {totalAmount}");
+            Console.WriteLine($"Discount: {discount}");
+            Console.WriteLine($"Final Total: {finalTotal}");
+
+            double payment;
+
+            while (true)
+            {
+                Console.Write("Enter payment: ");
+
+                if (double.TryParse(Console.ReadLine(), out payment))
+                {
+                    if (payment >= finalTotal)
+                        break;
+
+                    Console.WriteLine("Insufficient payment.");
+                }
+                else
+                {
+                    Console.WriteLine("Payment must be numeric.");
+                }
+            }
+
+            double change = payment - finalTotal;
+            string receiptNo = receiptCounter.ToString("0000");
+            receiptCounter++;
+
+            Console.WriteLine("\n===== RECEIPT =====");
+            Console.WriteLine($"Receipt No: {receiptNo}");
+            Console.WriteLine($"Date: {DateTime.Now}");
+            Console.WriteLine($"Payment: {payment}");
+            Console.WriteLine($"Change: {change}");
+
+            history[orderCount] = new Order
+            {
+                ReceiptNumber = receiptNo,
+                FinalTotal = finalTotal,
+                OrderDate = DateTime.Now.ToString()
+            };
+
+            orderCount++;
+            cartCount = 0;
+
+            ShowLowStock(items);
+        }
+
+        static void ShowLowStock(Item[] items)
+        {
+            Console.WriteLine("\nLOW STOCK ALERT:");
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (items[i].StockLeft <= 5)
+                {
+                    Console.WriteLine($"{items[i].ItemName} has only {items[i].StockLeft} stocks left.");
+                }
+            }
+        }
+
+        static void ShowOrderHistory(Order[] history, int count)
+        {
+            Console.WriteLine("\n===== ORDER HISTORY =====");
+
+            for (int i = 0; i < count; i++)
+            {
+                Console.WriteLine($"Receipt #{history[i].ReceiptNumber} | Final Total: {history[i].FinalTotal} | {history[i].OrderDate}");
+            }
+        }
+
+        static int GetValidNumber(string message)
+        {
+            int value;
+
+            while (true)
+            {
+                Console.Write(message);
+
+                if (int.TryParse(Console.ReadLine(), out value))
+                {
+                    return value;
+                }
+
+                Console.WriteLine("Invalid input. Numbers only.");
+            }
+        }
+
+        static bool GetYesNo(string message)
+        {
+            while (true)
+            {
+                Console.Write(message);
+                string input = Console.ReadLine().ToUpper();
+
+                if (input == "Y")
+                    return true;
+
+                if (input == "N")
+                    return false;
+
+                Console.WriteLine("Please enter Y or N only.");
+            }
+        }
+    }
+}
+
